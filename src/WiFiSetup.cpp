@@ -1,26 +1,38 @@
 #include "WiFiSetup.h"
-#include <Arduino.h> // Diperlukan untuk fungsi delay dan Serial
+#include <Arduino.h>
+#include <WiFi.h>
 
-// --- DEFINISI KONSTANTA (HARUS DIUBAH) ---
-const char* ssid = "Pikan Miku";       // <<== GANTI!
-const char* password = "jasamaru123"; // <<== GANTI!
+// --- Konfigurasi Access Point (AP) ---
+// GANTI DENGAN NAMA JARINGAN DAN PASSWORD YANG ANDA INGINKAN
+const char* ssid = "JawaraBot_AP";       
+const char* password = "jawarabot123"; 
 
-/**
- * @brief Implementasi fungsi untuk inisialisasi koneksi WiFi.
- */
+// IP Address AP: Default ESP32 adalah 192.168.4.1
+IPAddress localIP(192, 168, 4, 1);
+IPAddress gateway(192, 168, 4, 1);
+IPAddress subnet(255, 255, 255, 0);
+
 IPAddress setupWiFi() {
-    Serial.print("Connecting to WiFi...");
-    WiFi.begin(ssid, password);
+    Serial.println("Starting ESP32 in Access Point (AP) Mode...");
 
-    // Tunggu hingga terhubung
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
+    // Mengatur konfigurasi jaringan AP
+    if (!WiFi.softAPConfig(localIP, gateway, subnet)) {
+        Serial.println("AP Configuration Failed!");
+    }
+
+    // Memulai Access Point
+    // Argumen 1: SSID, Argumen 2: Password, Argumen 3: Channel, Argumen 4: Hidden, Argumen 5: Max connections
+    bool result = WiFi.softAP(ssid, password, 1, false, 4);
+
+    if (result) {
+        Serial.println("WiFi Access Point Started.");
+        Serial.print("SSID: ");
+        Serial.println(ssid);
+        Serial.print("Connect to IP: ");
+        Serial.println(WiFi.softAPIP()); // Menampilkan IP internal (192.168.4.1)
+    } else {
+        Serial.println("WiFi AP Failed to Start.");
     }
     
-    Serial.println("\nConnected!");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-    
-    return WiFi.localIP();
+    return WiFi.softAPIP(); // Mengembalikan IP 192.168.4.1
 }

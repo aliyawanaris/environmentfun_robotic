@@ -1,3 +1,7 @@
+#include "HtmlContent.h"
+
+// Definisi Konstanta HTML (Ganti seluruh konten ini dengan kode HTML yang sudah dirapikan)
+const char* INDEX_HTML = R"rawliteral(
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -237,3 +241,4 @@
   </script>
 </body>
 </html>
+)rawliteral";

@@ -1,6 +1,6 @@
 #include "MotorControl.h"
 
-// --- 1. Definisi Konstanta Pin Motor DC (L298N) ---
+// --- Definisi Konstanta Pin Motor DC (L298N) ---
 const int motorKiri_A = 27; 
 const int motorKiri_B = 26; 
 const int enableKiri = 14;  // PWM Channel 0
@@ -11,18 +11,16 @@ const int enableKanan = 32;  // PWM Channel 1
 
 // Konfigurasi PWM
 const int freq = 5000;
-const int res = 8; // Resolusi 8 bit (0-255)
+const int res = 8; 
 const int chKiri = 0;
 const int chKanan = 1;
 
-// Variabel Kontrol Global
 int globalSpeed = 150; 
 const int maxSpeed = 255;    
 
-// --- 2. Implementasi Fungsi ---
+// --- Implementasi Fungsi ---
 
 void setupMotorPins() {
-    // Inisialisasi Pin Motor DC dan PWM
     pinMode(motorKiri_A, OUTPUT);
     pinMode(motorKiri_B, OUTPUT);
     pinMode(motorKanan_A, OUTPUT);
@@ -34,7 +32,6 @@ void setupMotorPins() {
     ledcAttachPin(enableKanan, chKanan);
 
     stopMobil(); 
-
     Serial.println("Motor DC Control Initialized.");
 }
 

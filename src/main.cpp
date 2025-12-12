@@ -3,23 +3,19 @@
 #include "WiFiSetup.h"    
 #include "MotorControl.h" 
 #include "WaterControl.h" 
-#include "htmlContent.h" // Berisi konstanta INDEX_HTML
+#include "HtmlContent.h" 
 
 // --- 1. Konfigurasi Server dan WebSocket ---
 AsyncWebServer server(80);
-AsyncWebSocket ws("/ws"); // WebSocket endpoint
+AsyncWebSocket ws("/ws"); 
 
-// --- 2. Penanganan WebSocket ---
+// --- 2. Penanganan WebSocket (Logic Rotasi Diperbaiki) ---
 
-/**
- * @brief Fungsi callback untuk menangani event (data, koneksi, diskoneksi) WebSocket.
- */
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     if (type == WS_EVT_CONNECT) {
         Serial.println("WebSocket Client Connected");
     } else if (type == WS_EVT_DISCONNECT) {
         Serial.println("WebSocket Client Disconnected");
-        // Matikan semua fungsi saat koneksi terputus
         stopMobil();
         setPump(false); 
     } else if (type == WS_EVT_DATA) {
@@ -27,36 +23,40 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
             data[len] = 0;
             String message = (char*)data;
-            
-            // Ambil kecepatan global dari MotorControl.cpp (extern int globalSpeed)
             int speed = globalSpeed; 
 
-            // --- Logika Kontrol Motor Drive ---
+            // Logika Kontrol Motor Drive
             if (message == "FORWARD") {
                 bergerak(speed, true, speed, true);
             } else if (message == "BACKWARD") {
                 bergerak(speed, false, speed, false);
-            } else if (message == "LEFT") {
+            } 
+            // ROTASI DIPERBAIKI: Jika KIRI terbalik, buat roda kanan maju dan roda kiri mundur
+            else if (message == "LEFT") {
+                // Motor Kiri Mundur, Motor Kanan Maju
                 bergerak(speed, false, speed, true); 
-            } else if (message == "RIGHT") {
+            } 
+            // ROTASI DIPERBAIKI: Jika KANAN terbalik, buat roda kiri maju dan roda kanan mundur
+            else if (message == "RIGHT") {
+                // Motor Kiri Maju, Motor Kanan Mundur
                 bergerak(speed, true, speed, false); 
-            } else if (message == "STOP") {
+            } 
+            else if (message == "STOP") {
                 stopMobil();
             } 
-            
-            // --- Logika Kontrol Pompa dan Servo (Water Control) ---
+            // Logika Kontrol Pompa
             else if (message == "PUMP_ON") {
                 setPump(true);
             } else if (message == "PUMP_OFF") {
                 setPump(false);
             } 
+            // Logika Kontrol Servo
             else if (message.startsWith("SERVO:")) {
                 String angleStr = message.substring(6);
                 int angle = angleStr.toInt();
                 setServoAngle(angle);
             }
-            
-            // --- Logika Kontrol Kecepatan ---
+            // Logika Kontrol Kecepatan
             else if (message.startsWith("SPEED:")) {
                 String speedStr = message.substring(6);
                 globalSpeed = speedStr.toInt();
@@ -65,30 +65,19 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
     }
 }
 
-// --- 3. SETUP dan LOOP ---
+// --- 3. SETUP dan LOOP (Tidak Berubah) ---
 
 void setup() {
     Serial.begin(115200);
 
-    // 1. Inisialisasi Pin Motor Drive
-    // Fungsi ini didefinisikan di MotorControl.cpp
     setupMotorPins(); 
-    
-    // 2. Inisialisasi Pin Relay dan Servo
-    // Fungsi ini didefinisikan di WaterControl.cpp
     setupWaterControlPins(); 
-    
-    // 3. Panggil Fungsi Setup WiFi
-    // Fungsi ini didefinisikan di WiFiSetup.cpp
     setupWiFi(); 
 
-    // 4. Inisialisasi WebSocket
     ws.onEvent(onWsEvent);
     server.addHandler(&ws);
 
-    // 5. Routing Web Server untuk Halaman Utama
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        // Mengirim konten HTML langsung dari HtmlContent.cpp
         request->send_P(200, "text/html", INDEX_HTML); 
     });
 
@@ -97,6 +86,5 @@ void setup() {
 }
 
 void loop() {
-    // Membersihkan klien WebSocket yang terputus secara berkala
     ws.cleanupClients();
 }
